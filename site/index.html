@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="light dark">
+<title>Фотограф</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@400;500&display=swap">
+<style>
+/* Палитра: «световой стол» днём, «тёмная комната» ночью, акцент цвета цианотипии */
+:root{
+  --bg:#ECEFED; --surface:#FFFFFF; --ink:#0F1315; --muted:#5F696D; --line:#D3D9D7;
+  --accent:#1D3E9E; --accent-ink:#FFFFFF; --accent-soft:#DAE2F7; --danger:#B3261E;
+  --film:#0B0D0E; --hole:#ECEFED;
+  --display:"Unbounded","Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --text:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0D1011; --surface:#171B1D; --ink:#EDEFEC; --muted:#8E989C; --line:#272D30;
+  --accent:#8AA4F8; --accent-ink:#0A1024; --accent-soft:#1C2542; --film:#252B2F; --hole:#0D1011; --danger:#F1948C;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--text);-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent}
+img{display:block;max-width:100%}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
+
+.page{max-width:560px;margin:0 auto;padding:16px 18px 136px}
+.muted{color:var(--muted)}
+.title{font:400 clamp(20px,6vw,25px)/1.2 var(--display);letter-spacing:-.01em;margin:0 0 4px}
+.hint{color:var(--muted);font-size:15px;margin-top:8px;max-width:46ch}
+
+/* навигация */
+.nav{margin:-6px 0 8px}
+.back{display:inline-flex;align-items:center;gap:2px;min-height:44px;padding-right:14px;margin-left:-6px;color:var(--muted);font-size:15px}
+
+/* главная */
+.brand{font:400 clamp(27px,8.4vw,35px)/1.12 var(--display);letter-spacing:-.025em;margin-top:8px}
+.lede{color:var(--muted);margin-top:12px;max-width:34ch}
+.reel{margin:26px -18px 10px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding-left:14px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.reel::-webkit-scrollbar{display:none}
+.track{position:relative;display:flex;gap:10px;width:max-content;min-width:100%;padding:28px 14px 34px;background:var(--film)}
+.track::before,.track::after{content:"";position:absolute;left:0;right:0;height:8px;background:var(--hole);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='8'%3E%3Crect x='4' width='10' height='8' rx='2'/%3E%3C/svg%3E") repeat-x;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='8'%3E%3Crect x='4' width='10' height='8' rx='2'/%3E%3C/svg%3E") repeat-x}
+.track::before{top:9px}
+.track::after{bottom:9px}
+.frame{position:relative;flex:none;width:152px;height:202px;scroll-snap-align:start}
+.frame img{width:100%;height:100%;object-fit:cover;border-radius:2px;background:#20262a}
+.fn{position:absolute;left:1px;bottom:-19px;font-size:10px;line-height:1;color:#98A2A6;font-variant-numeric:tabular-nums}
+.rows{margin-top:18px;border-top:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:14px 0;border-bottom:1px solid var(--line)}
+.row b{flex:1;font-weight:500;font-size:17px}
+.row span{color:var(--muted);font-size:14px}
+.row b small{display:block;margin-top:2px;font-weight:400;font-size:14px;color:var(--muted)}
+.row svg{color:var(--muted);flex:none}
+
+/* кнопки */
+.cta-bar{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:26px 18px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 62%,transparent)}
+.cta-bar>div{max-width:560px;margin:0 auto}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;padding:0 20px;border-radius:14px;font-weight:600;font-size:16px;text-align:center}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.primary:disabled{opacity:.6;cursor:default}
+.btn.ghost{border:1px solid var(--line);background:var(--surface);min-height:48px}
+
+/* портфолио */
+.tabs{display:flex;gap:22px;overflow-x:auto;margin:10px -18px 16px;padding:0 18px;border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;flex:none;padding:12px 0;color:var(--muted);font-weight:500;font-size:15px}
+.tab[aria-selected="true"]{color:var(--ink)}
+.tab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent)}
+.masonry{columns:2;column-gap:8px;margin-top:14px}
+.tabs+.masonry{margin-top:0}
+.ph{display:block;width:100%;margin:0 0 8px;break-inside:avoid;border-radius:3px;overflow:hidden;background:var(--line);min-height:110px}
+.ph img{width:100%;height:auto}
+
+/* цены */
+.pkg{padding:22px 0;border-bottom:1px solid var(--line)}
+.pkg:first-of-type{border-top:1px solid var(--line);margin-top:14px}
+.pkg-h{display:flex;justify-content:space-between;align-items:baseline;gap:14px}
+.pkg h3{font:400 18px/1.2 var(--display);letter-spacing:-.01em}
+.price{font:400 18px/1.2 var(--display);color:var(--accent);white-space:nowrap}
+.dur{color:var(--muted);font-size:14px;margin-top:4px}
+.pkg p{margin-top:10px}
+.incl{list-style:none;padding:0;margin:12px 0 18px}
+.incl li{position:relative;padding-left:26px;margin-top:6px;font-size:15px}
+.incl li::before{content:"";position:absolute;left:3px;top:.62em;width:10px;height:5px;border-left:2px solid var(--accent);border-bottom:2px solid var(--accent);rotate:-45deg}
+.note{color:var(--muted);font-size:14px;margin-top:18px}
+
+/* FAQ */
+.faq{margin-top:14px;border-top:1px solid var(--line)}
+details{border-bottom:1px solid var(--line)}
+summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:14px;min-height:58px;padding:16px 0;font-weight:500;cursor:pointer}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";flex:none;width:9px;height:9px;margin-right:4px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);rotate:45deg;translate:0 -2px;transition:rotate .15s}
+details[open] summary::after{rotate:-135deg;translate:0 2px}
+details p{padding:0 0 18px;color:var(--muted);max-width:46ch}
+
+/* заявка */
+.stephead{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.stepno{font-size:13px;color:var(--muted);white-space:nowrap}
+.bars{display:flex;gap:4px;flex:1}
+.bars i{flex:1;height:3px;border-radius:2px;background:var(--line)}
+.bars i.on{background:var(--accent)}
+.chip{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:999px;background:var(--accent-soft);font-size:14px}
+.opt{position:relative;display:flex;flex-direction:column;gap:2px;width:100%;min-height:66px;margin-top:10px;padding:14px 52px 14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.opt-t{font-weight:600}
+.opt-h{font-size:14px;color:var(--muted)}
+.tick{position:absolute;right:14px;top:50%;translate:0 -50%;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);color:transparent}
+.opt[aria-checked="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.opt[aria-checked="true"] .tick{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .x{position:absolute;top:5px;right:5px;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.62);color:#fff}
+.thumb.add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1.5px dashed var(--muted);background:transparent;color:var(--muted);font-size:13px;cursor:pointer}
+.field{display:block;margin-top:20px}
+.field>span{display:block;margin-bottom:6px;font-size:13px;color:var(--muted)}
+input[type=text],input[type=date],input[type=datetime-local],textarea{width:100%;min-height:50px;padding:13px 14px;font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;outline:none;-webkit-appearance:none;appearance:none}
+textarea{resize:vertical;line-height:1.45}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.seg button{min-height:48px;padding:0 6px;text-align:center;font-size:14px;border-left:1px solid var(--line)}
+.seg button:first-child{border-left:0}
+.seg [aria-checked="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.sum-title{margin-top:30px;font-weight:600}
+.sum{margin-top:8px;border-top:1px solid var(--line)}
+.sum div{display:flex;justify-content:space-between;gap:18px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
+.sum dt{color:var(--muted);flex:none}
+.sum dd{text-align:right;font-weight:500;overflow-wrap:anywhere}
+
+/* админ */
+select{width:100%;min-height:50px;padding:0 14px;font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;outline:none}
+.btn.danger{min-height:48px;background:transparent;border:1px solid var(--danger);color:var(--danger)}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font:500 13px/1.5 var(--text);letter-spacing:0;vertical-align:middle;background:var(--line);color:var(--muted)}
+.badge.new{background:var(--accent-soft);color:var(--ink)}
+.badge.accepted{background:var(--accent);color:var(--accent-ink)}
+.link{color:var(--accent);text-align:right;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+
+/* готово */
+.done{padding-top:34px}
+.okmark{width:64px;height:64px;color:var(--accent);margin-bottom:20px}
+.okmark path{stroke-dasharray:60;stroke-dashoffset:0;animation:draw .5s .1s ease-out backwards}
+@keyframes draw{from{stroke-dashoffset:60}}
+.done p{margin-top:12px;max-width:40ch}
+
+/* просмотр фото */
+#lb{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(6,8,9,.96)}
+#lb img{max-width:100%;max-height:100%;object-fit:contain;touch-action:pan-y}
+.lb-top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:calc(6px + env(safe-area-inset-top)) 8px 6px 18px;color:#dfe4e2;font-size:14px;font-variant-numeric:tabular-nums}
+.lb-btn{display:grid;place-items:center;width:48px;height:48px;color:#fff}
+.lb-nav{position:absolute;top:50%;translate:0 -50%}
+.lb-nav.prev{left:0}.lb-nav.next{right:0}
+
+#toast{position:fixed;left:18px;right:18px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:30;max-width:524px;margin:0 auto;padding:12px 16px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:15px;opacity:0;translate:0 8px;pointer-events:none;transition:opacity .18s,translate .18s}
+#toast.show{opacity:1;translate:0 0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main class="page" id="view"><p class="muted">Загрузка…</p></main>
+
+<div class="cta-bar" id="cta-bar" hidden><div><button class="btn primary" id="cta" type="button"></button></div></div>
+
+<div id="lb" hidden role="dialog" aria-modal="true" aria-label="Просмотр фото">
+  <div class="lb-top"><span id="lb-count"></span><button class="lb-btn" data-act="lbclose" aria-label="Закрыть"></button></div>
+  <button class="lb-btn lb-nav prev" data-act="lbprev" aria-label="Предыдущее фото"></button>
+  <img id="lb-img" alt="">
+  <button class="lb-btn lb-nav next" data-act="lbnext" aria-label="Следующее фото"></button>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+const tg = window.Telegram && window.Telegram.WebApp;
+const API_URL = ((window.APP_CONFIG || {}).API_URL || '').trim();
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const plural = (n, [one, few, many]) => { const m = n % 100, d = n % 10; return m > 10 && m < 15 ? many : d === 1 ? one : d >= 2 && d <= 4 ? few : many; };
+const icon = (p, s = 20) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const I = {
+  chev: '<path d="M9 6l6 6-6 6"/>', back: '<path d="M15 6l-6 6 6 6"/>', ext: '<path d="M7 17L17 7M9 7h8v8"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>', plus: '<path d="M12 5v14M5 12h14"/>', check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+};
+const todayISO = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const fmtDate = iso => iso ? iso.split('-').reverse().join('.') : '';
+const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+const MODES = { exact: 'Точная', flexible: 'Гибкая', unknown: 'Пока не знаю' };
+const STATUS = { new: 'новая', accepted: 'принята', declined: 'отклонена' };
+const MAX_FILES = 6;
+
+const params = new URLSearchParams(location.search);
+const source = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || params.get('src') || '';
+const adminParam = params.get('admin');
+const tgUser = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
+
+const state = {
+  content: null, view: 'home', stack: [], step: 0, filter: 'all', sending: false, result: null, lbList: [], lbIndex: 0,
+  requestId: '', isAdmin: false,
+  admin: { list: null, order: null, loading: false, error: '', result: null, start: '', dur: 2 },
+  order: {
+    type: '', package: '', files: [], links: '', date: '', dateMode: 'exact', location: '',
+    name: tgUser.first_name || '', contact: tgUser.username ? '@' + tgUser.username : '', comment: '',
+  },
+};
+
+/* ---------- сервер (Google Apps Script) ---------- */
+// Запрос «простого» типа (text/plain, без своих заголовков): так браузер не делает предварительный OPTIONS,
+// который Apps Script не умеет обрабатывать. Подпись Telegram (initData) едет внутри тела.
+async function api(action, payload = {}, timeoutMs = 60000) {
+  if (!API_URL) throw new Error('Не настроен адрес сервера: заполните API_URL в файле config.js');
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, signal: ctrl.signal,
+      body: JSON.stringify({ action, initData: (tg && tg.initData) || '', ...payload }),
+    });
+    let data;
+    try { data = JSON.parse(await resp.text()); } catch (e) { throw new Error('Сервер вернул неожиданный ответ. Попробуйте ещё раз.'); }
+    if (!data.ok) throw new Error(data.error || 'Ошибка сервера');
+    return data;
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Сервер долго не отвечает. Нажмите «Отправить» ещё раз: дубликат заявки не создастся.');
+    if (err instanceof TypeError) throw new Error('Нет связи с сервером. Проверьте интернет и повторите.');
+    throw err;
+  } finally { clearTimeout(timer); }
+}
+
+/* ---------- Telegram ---------- */
+function applyTheme() {
+  const dark = (tg && tg.colorScheme) ? tg.colorScheme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  try { tg && tg.setHeaderColor(bg); tg && tg.setBackgroundColor(bg); tg && tg.setBottomBarColor && tg.setBottomBarColor(bg); } catch (e) {}
+}
+if (tg) { tg.ready(); tg.expand(); tg.onEvent('themeChanged', applyTheme); tg.BackButton.onClick(() => back()); }
+applyTheme();
+
+const haptic = kind => { try { tg && tg.HapticFeedback.notificationOccurred(kind); } catch (e) {} };
+const isHttp = u => /^https?:\/\//i.test(u || '');
+const openLink = url => { if (!isHttp(url)) return; if (tg && tg.openLink) tg.openLink(url); else window.open(url, '_blank', 'noopener'); };
+const openTg = username => { const u = 'https://t.me/' + encodeURIComponent(username); if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, '_blank', 'noopener'); };
+const closeApp = () => { if (tg) tg.close(); else { state.view = 'home'; state.stack = []; render(); } };
+const ask = msg => new Promise(res => { if (tg && tg.showConfirm) tg.showConfirm(msg, ok => res(!!ok)); else res(window.confirm(msg)); });
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+/* ---------- экраны ---------- */
+const V = {
+  home() {
+    const c = state.content, b = c.brand || {}, ph = c.portfolio || [], pk = c.packages || [], fq = c.faq || [];
+    state.lbList = ph;
+    const reel = ph.length ? `<div class="reel" aria-label="Кадры из портфолио"><div class="track">${
+      ph.slice(0, 8).map((p, i) => `<button class="frame" data-act="lb" data-i="${i}" aria-label="Открыть кадр ${i + 1}"><img src="${esc(p.url)}" alt="${esc(p.title || 'Кадр из портфолио')}" loading="${i < 3 ? 'eager' : 'lazy'}"><span class="fn">${i + 1}</span></button>`).join('')
+    }</div></div>` : '';
+    const row = (to, title, meta) => `<button class="row" data-act="go" data-to="${to}"><b>${title}</b><span>${meta}</span>${icon(I.chev, 18)}</button>`;
+    return `<h1 class="brand">${esc(b.name || 'Фотограф')}</h1>
+      <p class="lede">${esc(b.tagline || '')}</p>
+      ${reel}
+      <div class="rows">
+        ${row('portfolio', 'Портфолио', `${ph.length} ${plural(ph.length, ['кадр', 'кадра', 'кадров'])}`)}
+        ${row('prices', 'Цены и пакеты', `${pk.length} ${plural(pk.length, ['пакет', 'пакета', 'пакетов'])}`)}
+        ${row('faq', 'Частые вопросы', `${fq.length}`)}
+        ${b.site_url ? `<button class="row" data-act="site"><b>Сайт фотографа</b>${icon(I.ext, 18)}</button>` : ''}
+        ${state.isAdmin ? `<button class="row" data-act="adm-list"><b>Заявки</b><span>для администратора</span>${icon(I.chev, 18)}</button>` : ''}
+      </div>`;
+  },
+
+  portfolio() {
+    const c = state.content, all = c.portfolio || [];
+    const cats = [...new Set(all.map(p => p.category).filter(k => k && k !== 'all'))];
+    const names = Object.fromEntries((c.shoot_types || []).map(t => [t.id, t.title]));
+    if (state.filter !== 'all' && !cats.includes(state.filter)) state.filter = 'all';
+    const list = state.filter === 'all' ? all : all.filter(p => p.category === state.filter);
+    state.lbList = list;
+    const tabs = cats.length > 1 ? `<div class="tabs" role="tablist">${['all', ...cats].map(k =>
+      `<button class="tab" role="tab" aria-selected="${state.filter === k}" data-act="tab" data-k="${esc(k)}">${esc(k === 'all' ? 'Все' : names[k] || k)}</button>`).join('')}</div>` : '';
+    const grid = list.length ? `<div class="masonry">${list.map((p, i) =>
+      `<button class="ph" data-act="lb" data-i="${i}" aria-label="Открыть фото ${i + 1}"><img src="${esc(p.url)}" alt="${esc(p.title || '')}" loading="lazy"></button>`).join('')}</div>`
+      : '<p class="hint">Фото скоро появятся.</p>';
+    return `<h2 class="title">Портфолио</h2>${tabs}${grid}`;
+  },
+
+  prices() {
+    const c = state.content, pk = c.packages || [];
+    return `<h2 class="title">Цены и пакеты</h2>
+      ${pk.map((p, i) => `<article class="pkg">
+        <div class="pkg-h"><h3>${esc(p.title)}</h3><div class="price">${esc(p.price)}</div></div>
+        ${p.duration ? `<div class="dur">${esc(p.duration)}</div>` : ''}
+        ${p.description ? `<p>${esc(p.description)}</p>` : ''}
+        <ul class="incl">${(p.includes || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+        <button class="btn ghost" data-act="pkg" data-i="${i}">Выбрать этот пакет</button>
+      </article>`).join('')}
+      ${c.prices_note ? `<p class="note">${esc(c.prices_note)}</p>` : ''}`;
+  },
+
+  faq() {
+    const fq = state.content.faq || [];
+    return `<h2 class="title">Частые вопросы</h2>
+      <div class="faq">${fq.map(x => `<details><summary>${esc(x.q)}</summary><p>${esc(x.a)}</p></details>`).join('')}</div>`;
+  },
+
+  order() {
+    const o = state.order, s = state.step, c = state.content;
+    const titles = ['Какая съёмка вам нужна?', 'Примеры кадров', 'Когда и где', 'Как с вами связаться'];
+    let body = '';
+    if (s === 0) {
+      body = `${o.package ? `<p class="chip">Пакет: ${esc(o.package)}</p>` : ''}
+        <div role="radiogroup" aria-label="Тип съёмки">${(c.shoot_types || []).map(t =>
+          `<button class="opt" role="radio" aria-checked="${o.type === t.id}" data-act="type" data-id="${esc(t.id)}"><span class="opt-t">${esc(t.title)}</span><span class="opt-h">${esc(t.hint || '')}</span><span class="tick">${icon(I.check, 16)}</span></button>`).join('')}</div>`;
+    } else if (s === 1) {
+      body = `<p class="hint">Добавьте фото, которые нравятся по свету, позам или настроению. Так фотографу проще попасть в ваш стиль. Этот шаг можно пропустить.</p>
+        <div class="thumbs">${o.files.map((f, i) => `<div class="thumb"><img src="${f.url}" alt="Пример ${i + 1}"><button class="x" data-act="rmfile" data-i="${i}" aria-label="Убрать фото">${icon(I.close, 16)}</button></div>`).join('')}
+          ${o.files.length < MAX_FILES ? `<label class="thumb add">${icon(I.plus, 24)}<span>Добавить</span><input class="sr" type="file" id="file" accept="image/*" multiple></label>` : ''}</div>
+        <label class="field"><span>Ссылки на примеры</span><textarea data-bind="links" rows="3" placeholder="Pinterest, Instagram или любая ссылка, каждая с новой строки">${esc(o.links)}</textarea></label>`;
+    } else if (s === 2) {
+      body = `<label class="field"><span>Примерная дата</span><input type="date" data-bind="date" value="${esc(o.date)}" min="${todayISO()}"></label>
+        <div class="field"><span>Насколько дата гибкая</span><div class="seg" role="radiogroup">${Object.entries(MODES).map(([k, v]) =>
+          `<button role="radio" aria-checked="${o.dateMode === k}" data-act="mode" data-k="${k}">${v}</button>`).join('')}</div></div>
+        <label class="field"><span>Место или город</span><input type="text" data-bind="location" maxlength="120" value="${esc(o.location)}" placeholder="Например, парк, студия или центр города"></label>`;
+    } else {
+      const t = (c.shoot_types || []).find(x => x.id === o.type);
+      const nLinks = o.links.trim() ? o.links.trim().split(/\s+/).length : 0;
+      const refs = [o.files.length ? `${o.files.length} фото` : '', nLinks ? `${nLinks} ${plural(nLinks, ['ссылка', 'ссылки', 'ссылок'])}` : ''].filter(Boolean).join(', ');
+      const dateText = o.date ? `${fmtDate(o.date)}, ${MODES[o.dateMode].toLowerCase()}` : 'Пока не знаю';
+      body = `<label class="field"><span>Как к вам обращаться</span><input type="text" data-bind="name" maxlength="80" autocomplete="name" value="${esc(o.name)}"></label>
+        <label class="field"><span>Телефон или @username</span><input type="text" data-bind="contact" maxlength="120" autocomplete="tel" value="${esc(o.contact)}"></label>
+        <label class="field"><span>Комментарий</span><textarea data-bind="comment" rows="4" maxlength="1500" placeholder="Идея, настроение, сколько человек, особые пожелания">${esc(o.comment)}</textarea></label>
+        <p class="sum-title">Ваша заявка</p>
+        <dl class="sum">
+          <div><dt>Съёмка</dt><dd>${esc(t ? t.title : '')}</dd></div>
+          ${o.package ? `<div><dt>Пакет</dt><dd>${esc(o.package)}</dd></div>` : ''}
+          <div><dt>Дата</dt><dd>${esc(dateText)}</dd></div>
+          ${o.location.trim() ? `<div><dt>Место</dt><dd>${esc(o.location.trim())}</dd></div>` : ''}
+          ${refs ? `<div><dt>Примеры</dt><dd>${esc(refs)}</dd></div>` : ''}
+        </dl>`;
+    }
+    return `<div class="stephead"><span class="stepno">Шаг ${s + 1} из 4</span><div class="bars">${[0, 1, 2, 3].map(i => `<i class="${i <= s ? 'on' : ''}"></i>`).join('')}</div></div>
+      <h2 class="title">${titles[s]}</h2>${body}`;
+  },
+
+  done() {
+    const r = state.result || {};
+    return `<div class="done">${okMark()}
+      <h2 class="title">Заявка №${esc(r.id)} отправлена</h2>
+      <p>Фотограф посмотрит её и ответит ${esc(r.reply_time || 'в ближайшее время')}. Подтверждение и напоминания придут вам в чат с ботом.</p>
+    </div>`;
+  },
+
+  adminList() {
+    const a = state.admin, head = '<h2 class="title">Заявки</h2>';
+    if (a.loading) return `${head}<p class="hint">Загрузка…</p>`;
+    if (a.error) return `${head}<p class="hint">${esc(a.error)}</p>`;
+    const list = a.list || [];
+    if (!list.length) return `${head}<p class="hint">Заявок пока нет.</p>`;
+    return `${head}<div class="rows">${list.map(o => `<button class="row" data-act="adm-open" data-id="${o.id}">
+      <b>№${o.id} ${esc(o.name)}<small>${esc(o.shoot_type)}${o.when ? ', ' + esc(o.when) : ''}</small></b>
+      <span class="badge ${esc(o.status)}">${esc(STATUS[o.status] || o.status)}</span>${icon(I.chev, 18)}</button>`).join('')}</div>`;
+  },
+
+  adminOrder() {
+    const a = state.admin;
+    if (a.loading) return '<h2 class="title">Заявка</h2><p class="hint">Загрузка…</p>';
+    if (a.error) return `<h2 class="title">Заявка</h2><p class="hint">${esc(a.error)}</p>`;
+    const o = a.order;
+    const dateText = o.approx_date ? `${fmtDate(o.approx_date)}, ${(MODES[o.date_mode] || '').toLowerCase()}` : 'Не указана';
+    const rows = [
+      ['Клиент', esc(o.name)],
+      ['Контакт', esc(o.contact)],
+      o.username ? ['Telegram', `<button class="link" data-act="tglink" data-u="${esc(o.username)}">@${esc(o.username)}</button>`] : null,
+      ['Съёмка', esc(o.shoot_type)],
+      o.package ? ['Пакет', esc(o.package)] : null,
+      ['Дата', esc(dateText)],
+      o.location ? ['Место', esc(o.location)] : null,
+      o.comment ? ['Комментарий', esc(o.comment)] : null,
+      ...(o.links || []).map(l => ['Пример', `<button class="link" data-act="ext" data-u="${esc(l)}">${esc(l.replace(/^https?:\/\//, '').slice(0, 40))}</button>`]),
+      o.photos_count ? ['Фото', `${o.photos_count} шт., в чате с ботом`] : null,
+      o.source ? ['Источник', esc(o.source)] : null,
+      o.shoot_at_local ? ['Съёмка назначена', esc(o.shoot_at_local)] : null,
+    ].filter(Boolean);
+    const form = o.status === 'new' ? `
+      <label class="field"><span>Дата и время съёмки</span><input type="datetime-local" data-abind="start" value="${esc(a.start)}" min="${todayISO()}T00:00"></label>
+      <p class="hint">Оставьте пустым, если точной даты пока нет: в календарь ничего не добавится.</p>
+      <label class="field"><span>Длительность</span><select data-abind="dur">${[1, 2, 3, 4, 6, 8].map(h => `<option value="${h}"${+a.dur === h ? ' selected' : ''}>${h} ч</option>`).join('')}</select></label>
+      <p style="margin-top:22px"><button class="btn danger" data-act="adm-decline">Отклонить заявку</button></p>` : '';
+    return `<h2 class="title">Заявка №${o.id} <span class="badge ${esc(o.status)}">${esc(STATUS[o.status] || o.status)}</span></h2>
+      <dl class="sum">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>${form}`;
+  },
+
+  adminDone() {
+    const r = state.admin.result || {};
+    const L = [];
+    if (r.action === 'declined') L.push('Заявка отклонена.');
+    else L.push(r.when ? `Съёмка назначена на ${esc(r.when)}.` : 'Заявка принята, дата пока без точного времени.');
+    if (r.calendar === 'added') L.push('Событие добавлено в Google Календарь.');
+    if (r.calendar === 'error') L.push(`Событие в календарь добавить не удалось: ${esc(r.calendar_error)}`);
+    L.push(r.client_notified ? 'Клиент получил уведомление в Telegram.' : 'Клиенту не удалось отправить сообщение (он не запускал бота). Свяжитесь с ним по контакту из заявки.');
+    return `<div class="done">${okMark()}<h2 class="title">Готово</h2>${L.map(x => `<p>${x}</p>`).join('')}</div>`;
+  },
+
+  error() {
+    return `<h2 class="title">Не получилось загрузить</h2><p class="hint">Проверьте интернет и попробуйте ещё раз.</p>
+      <p style="margin-top:20px"><button class="btn ghost" data-act="retry">Повторить</button></p>`;
+  },
+};
+
+const okMark = () => `<svg class="okmark" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="32" cy="32" r="29"/><path d="M19 33l9 9 17-19"/></svg>`;
+
+/* ---------- отрисовка ---------- */
+const NO_NAV = ['home', 'done', 'error', 'adminDone'];
+
+function render() {
+  $('#view').innerHTML = V[state.view]();
+  if (!NO_NAV.includes(state.view)) $('#view').insertAdjacentHTML('afterbegin', `<nav class="nav"><button class="back" data-act="back">${icon(I.back, 20)}Назад</button></nav>`);
+  updateCta();
+  syncBack();
+}
+
+function adminCanAccept() { const a = state.admin; return state.view === 'adminOrder' && !a.loading && !a.error && a.order && a.order.status === 'new'; }
+
+function updateCta() {
+  const v = state.view, o = state.order, bar = $('#cta-bar'), btn = $('#cta');
+  bar.hidden = v === 'error' || v === 'adminList' || (v === 'adminOrder' && !adminCanAccept());
+  btn.disabled = state.sending;
+  if (v === 'order') {
+    btn.textContent = state.sending ? 'Отправляем…' : state.step === 3 ? 'Отправить заявку'
+      : state.step === 1 && !o.files.length && !o.links.trim() ? 'Пропустить' : 'Далее';
+  } else if (v === 'done' || v === 'adminDone') btn.textContent = 'Закрыть';
+  else if (v === 'adminOrder') btn.textContent = state.sending ? 'Сохраняем…' : 'Принять заявку';
+  else btn.textContent = 'Заказать съёмку';
+}
+
+function syncBack() {
+  if (!tg) return;
+  const show = !NO_NAV.includes(state.view) || !$('#lb').hidden;
+  show ? tg.BackButton.show() : tg.BackButton.hide();
+}
+
+function go(view) { state.stack.push(state.view); state.view = view; render(); window.scrollTo(0, 0); }
+
+function back() {
+  if (!$('#lb').hidden) return closeLb();
+  if (state.sending) return;
+  if (state.view === 'order' && state.step > 0) { state.step--; render(); window.scrollTo(0, 0); return; }
+  state.view = state.stack.pop() || 'home'; render(); window.scrollTo(0, 0);
+}
+
+/* ---------- просмотр фото ---------- */
+function showLb() {
+  const p = state.lbList[state.lbIndex]; if (!p) return;
+  $('#lb-img').src = p.url; $('#lb-img').alt = p.title || '';
+  $('#lb-count').textContent = `${state.lbIndex + 1} из ${state.lbList.length}`;
+}
+function openLb(i) { state.lbIndex = i; $('#lb').hidden = false; showLb(); syncBack(); }
+function closeLb() { $('#lb').hidden = true; $('#lb-img').removeAttribute('src'); syncBack(); }
+function stepLb(d) { const n = state.lbList.length; state.lbIndex = (state.lbIndex + d + n) % n; showLb(); }
+
+/* ---------- заявка клиента ---------- */
+function startOrder(pkg) {
+  const o = state.order;
+  if (pkg) { o.package = pkg.title; if (pkg.shoot_type) o.type = pkg.shoot_type; } else o.package = '';
+  state.step = 0; go('order');
+}
+
+function validate(step) {
+  const o = state.order;
+  if (step === 0 && !o.type) return 'Выберите тип съёмки';
+  if (step === 2 && !o.date && o.dateMode !== 'unknown') return 'Укажите примерную дату или выберите «Пока не знаю»';
+  if (step === 3) {
+    if (!o.name.trim()) return 'Укажите, как к вам обращаться';
+    if (o.contact.trim().length < 3) return 'Укажите телефон или @username для связи';
+  }
+  return '';
+}
+
+function nextStep() {
+  const err = validate(state.step);
+  if (err) { toast(err); haptic('warning'); return; }
+  if (state.step < 3) { state.step++; render(); window.scrollTo(0, 0); } else submit();
+}
+
+function loadBitmap(file) {
+  if (window.createImageBitmap) return createImageBitmap(file);
+  return new Promise((res, rej) => { const img = new Image(); img.onload = () => res(img); img.onerror = rej; img.src = URL.createObjectURL(file); });
+}
+
+// Уменьшаем фото до 1600 px и переводим в JPEG: так заявка отправляется быстро даже по мобильной сети
+async function toJpegBase64(file, max = 1600, quality = 0.8) {
+  const bmp = await loadBitmap(file);
+  const w = bmp.naturalWidth || bmp.width, h = bmp.naturalHeight || bmp.height;
+  const k = Math.min(1, max / Math.max(w, h));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(w * k); canvas.height = Math.round(h * k);
+  canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', quality).split(',')[1];
+}
+
+async function submit() {
+  if (state.sending) return;
+  const o = state.order, t = (state.content.shoot_types || []).find(x => x.id === o.type);
+  state.sending = true; updateCta();
+  try {
+    if (!state.requestId) state.requestId = uuid();   // при повторной отправке дубль на сервере не создастся
+    const photos = [];
+    for (const f of o.files) {
+      try { photos.push(await toJpegBase64(f.file)); } catch (e) { throw new Error('Не удалось обработать одно из фото. Уберите его и попробуйте снова.'); }
+    }
+    const data = await api('order', {
+      request_id: state.requestId, photos,
+      order: {
+        shoot_type: t ? t.title : '', package: o.package, approx_date: o.date, date_mode: o.dateMode,
+        location: o.location.trim(), name: o.name.trim(), contact: o.contact.trim(), comment: o.comment.trim(),
+        links: o.links.trim(), source,
+      },
+    }, 90000);
+
+    haptic('success');
+    o.files.forEach(f => URL.revokeObjectURL(f.url));
+    Object.assign(o, { type: '', package: '', files: [], links: '', date: '', dateMode: 'exact', location: '', comment: '' });
+    state.requestId = ''; state.result = data; state.stack = []; state.step = 0; state.view = 'done';
+  } catch (err) {
+    haptic('error'); toast(err.message);
+  } finally {
+    state.sending = false; render();
+  }
+}
+
+/* ---------- админ ---------- */
+async function openAdminList() {
+  state.stack.push(state.view); state.view = 'adminList';
+  Object.assign(state.admin, { loading: true, error: '' }); render();
+  try { state.admin.list = (await api('admin_list')).orders; } catch (e) { state.admin.error = e.message; }
+  state.admin.loading = false; if (state.view === 'adminList') render();
+}
+
+async function openAdminOrder(id, push = true) {
+  if (push) state.stack.push(state.view);
+  state.view = 'adminOrder'; Object.assign(state.admin, { loading: true, error: '', order: null }); render();
+  try {
+    const o = (await api('admin_get', { order_id: id })).order;
+    Object.assign(state.admin, { order: o, start: o.default_start || '', dur: o.default_duration || 2 });
+  } catch (e) { state.admin.error = e.message; }
+  state.admin.loading = false; if (state.view === 'adminOrder') render();
+}
+
+async function adminAct(action, extra) {
+  if (state.sending) return;
+  state.sending = true; updateCta();
+  try {
+    state.admin.result = await api(action, { order_id: state.admin.order.id, ...extra });
+    haptic('success'); state.stack = []; state.view = 'adminDone';
+  } catch (e) { haptic('error'); toast(e.message); }
+  finally { state.sending = false; render(); }
+}
+
+async function adminAccept() {
+  const a = state.admin;
+  if (!a.start && !(await ask('Принять без точной даты? В календарь ничего не добавится.'))) return;
+  adminAct('admin_accept', { start: a.start, duration_h: +a.dur });
+}
+
+async function adminDecline() {
+  if (await ask('Отклонить заявку? Клиент получит уведомление.')) adminAct('admin_decline', {});
+}
+
+/* ---------- события ---------- */
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-act]'); if (!t) return;
+  const d = t.dataset;
+  switch (d.act) {
+    case 'go': go(d.to); break;
+    case 'back': back(); break;
+    case 'site': openLink(state.content.brand.site_url); break;
+    case 'tab': state.filter = d.k; render(); break;
+    case 'lb': openLb(+d.i); break;
+    case 'lbclose': closeLb(); break;
+    case 'lbprev': stepLb(-1); break;
+    case 'lbnext': stepLb(1); break;
+    case 'pkg': startOrder(state.content.packages[+d.i]); break;
+    case 'type': state.order.type = d.id; render(); break;
+    case 'mode': state.order.dateMode = d.k; render(); break;
+    case 'rmfile': { const [f] = state.order.files.splice(+d.i, 1); if (f) URL.revokeObjectURL(f.url); render(); break; }
+    case 'retry': init(); break;
+    case 'adm-list': openAdminList(); break;
+    case 'adm-open': openAdminOrder(+d.id); break;
+    case 'adm-decline': adminDecline(); break;
+    case 'tglink': openTg(d.u); break;
+    case 'ext': openLink(d.u); break;
+  }
+});
+
+$('#cta').addEventListener('click', () => {
+  const v = state.view;
+  if (v === 'order') nextStep();
+  else if (v === 'done' || v === 'adminDone') closeApp();
+  else if (v === 'adminOrder') adminAccept();
+  else startOrder(null);
+});
+
+document.addEventListener('input', ev => {
+  const el = ev.target, k = el.dataset && el.dataset.bind, ak = el.dataset && el.dataset.abind;
+  if (k) { state.order[k] = el.value; if (k === 'links') updateCta(); }
+  if (ak) state.admin[ak] = el.value;
+});
+
+document.addEventListener('change', ev => {
+  if (ev.target.dataset && ev.target.dataset.abind) state.admin[ev.target.dataset.abind] = ev.target.value;
+  if (ev.target.id !== 'file') return;
+  const room = MAX_FILES - state.order.files.length;
+  const picked = [...ev.target.files].filter(f => f.type.startsWith('image/'));
+  if (picked.length > room) toast(`Можно добавить не больше ${MAX_FILES} фото`);
+  picked.slice(0, room).forEach(file => state.order.files.push({ file, url: URL.createObjectURL(file) }));
+  render();
+});
+
+document.addEventListener('keydown', ev => {
+  if ($('#lb').hidden) return;
+  if (ev.key === 'Escape') closeLb(); else if (ev.key === 'ArrowLeft') stepLb(-1); else if (ev.key === 'ArrowRight') stepLb(1);
+});
+let x0 = null;
+$('#lb').addEventListener('touchstart', ev => { x0 = ev.touches[0].clientX; }, { passive: true });
+$('#lb').addEventListener('touchend', ev => {
+  if (x0 === null) return;
+  const dx = ev.changedTouches[0].clientX - x0; x0 = null;
+  if (Math.abs(dx) > 50) stepLb(dx < 0 ? 1 : -1);
+}, { passive: true });
+
+/* ---------- старт ---------- */
+// Портфолио можно подтягивать с сайта фотографа (поле portfolio_source_url в content.json).
+// Понимает свой формат [{url,title,category}] и медиатеку WordPress (source_url, title.rendered).
+async function fetchSitePortfolio(url) {
+  const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 6000);
+  try {
+    const resp = await fetch(url, { signal: ctrl.signal });
+    let raw = await resp.json();
+    if (raw && !Array.isArray(raw)) raw = raw.items || raw.photos || [];
+    return (Array.isArray(raw) ? raw : []).map(it => ({
+      url: it.url || it.source_url,
+      title: (it.title && it.title.rendered) || (typeof it.title === 'string' ? it.title : ''),
+      category: it.category || 'all',
+    })).filter(p => isHttp(p.url));
+  } catch (e) { return []; } finally { clearTimeout(timer); }
+}
+
+async function init() {
+  try {
+    const resp = await fetch('content.json?t=' + Date.now());
+    if (!resp.ok) throw new Error('content');
+    state.content = await resp.json();
+    document.title = (state.content.brand && state.content.brand.name) || 'Фотограф';
+    state.view = 'home'; state.stack = [];
+  } catch (e) { state.view = 'error'; render(); return; }
+
+  if (adminParam && tg && tg.initData) { state.stack = ['home']; openAdminOrder(+adminParam, false); }   // открыто кнопкой из карточки заявки
+  else render();
+
+  if (state.content.portfolio_source_url) {
+    fetchSitePortfolio(state.content.portfolio_source_url).then(items => {
+      if (!items.length) return;
+      state.content.portfolio = items;
+      if (['home', 'portfolio'].includes(state.view) && $('#lb').hidden) render();
+    });
+  }
+  // Заодно «будим» сервер (первый запрос к Apps Script после простоя медленный) и узнаём, админ ли пользователь
+  if (tg && tg.initData && API_URL) {
+    api('me', {}, 20000).then(r => { state.isAdmin = !!r.is_admin; if (state.view === 'home') render(); }).catch(() => {});
+  }
+}
+
+$('.lb-top .lb-btn').innerHTML = icon(I.close, 24);
+$('.lb-nav.prev').innerHTML = icon(I.back, 28);
+$('.lb-nav.next').innerHTML = icon(I.chev, 28);
+init();
+})();
+</script>
+</body>
+</html>

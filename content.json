@@ -1,7 +1,7 @@
 {
   "brand": {
-    "name": "Алина",
-    "tagline": "Портреты, love story и свадьбы. Свет, воздух и живые эмоции.",
+    "name": "Gyulalieva Alina",
+    "tagline": "ЭСТЕТИКА — ЭТО ВЫ!",
     "site_url": "https://gyulalievaalina.wfolio.pro/"
   },
   "shoot_types": [
@@ -31,21 +31,21 @@
       "hint": "Товары, команда, соцсети"
     }
   ],
-  "portfolio_source_url": "",
+  "portfolio_source_url": "https://gyulalievaalina.wfolio.pro/portfolio",
   "portfolio": [
+    {
+      "url": "https://i.wfolio.ru/x/We3n9NLgrwfi2tToZBHlpBdAFllh4cQl/R_Iwkxvh6WYB_GM7kqDxKKbN3ncom-rD/avVT-pJMvzYZCuVbfI0nWNeT6oKoZwYM/XohlVHhnTozepN-eqXT09_EMNfno9TMn/N0e8B-7k_c4lOTr4LrxjD6DPD2w1Jyl1/hPv9nr94_Z1wezEhLLNwNKcBfO9p_bOa.jpg",
+      "category": "me",
+      "title": ""
+    },
     {
       "url": "https://i.wfolio.ru/x/S-2NrO1P3Xrg-0obIz87x5CEdRdn88_B/LchDSKSlhFY4aTHLBEX4FXGHH7qKHErp/MyrPQGAt-3b5F5hKuIjXJougR46BvSbH/GmJ1rvs9_A_2BZRCSQbNpPX_YeRujuq7/66yDXceJj8TY0NYV01UUrw.png",
       "category": "detskaya-s-emka",
       "title": ""
     },
     {
-      "url": "https://i.wfolio.ru/x/cXPZPmu9lCw5tkRNat7JtyHjrPiZiclN/VJgIrluFLtZWGwzaT5FJ07DuSK__bTQA/rZeCH-9MfuVE6Ca8N5HvHrTizorJxzEY/oQKKFHlVeT-lGB7KC0u9hW9R28ZQNKpW/lqJDzIzVdm2uYA4n1dMHrg.jpg",
-      "category": "detskaya-s-emka",
-      "title": ""
-    },
-    {
-      "url": "https://i.wfolio.ru/x/cXPZPmu9lCw5tkRNat7JtyHjrPiZiclN/VJgIrluFLtZWGwzaT5FJ07DuSK__bTQA/5RtQZYEfBFe6nJ3O_GaIBulQwQ_ZXnZC/X1L_3DdRox4KRqce5BPBHwXQHIX5oSid/UghDyDdnU8XUvzeq4d4yCA.jpg",
-      "category": "yana",
+      "url": "https://i.wfolio.ru/x/D48ScH1DA6jxU_uSH-Or-C0cJClpP-QP/lEAL128xEMPGM2o_rKw_kMPHKR9vAJ80/SWrv_424rTyfftO3UbiafUt31gXjkhfa/bCxhOnU5rMgcOkzlGGaCfq9wd-7ur0zy/ITqlsuovSMgwPsaayClJHA.jpg",
+      "category": "victoria",
       "title": ""
     },
     {
@@ -59,33 +59,8 @@
       "title": ""
     },
     {
-      "url": "https://i.wfolio.ru/x/cXPZPmu9lCw5tkRNat7JtyHjrPiZiclN/VJgIrluFLtZWGwzaT5FJ07DuSK__bTQA/G5zAq2_i6tRb5ZJNMMqEv-mIJOqm9OJf/_3Nioo1bMWlWZBh9GuGxH9o7NtKdfRh-/fR-6uzieWej4uW8tdoLA7w.jpg",
-      "category": "shannon",
-      "title": ""
-    },
-    {
       "url": "https://i.wfolio.ru/x/cXPZPmu9lCw5tkRNat7JtyHjrPiZiclN/VJgIrluFLtZWGwzaT5FJ07DuSK__bTQA/hdGgbQTQ2i-eOx1xtHArk3btwl_QrWBh/cpNAjieMzwzeNURYg2Oca0H2ULMjzkLx/kNI7RWk3gYlVbpSivct4mw.jpg",
       "category": "polina",
-      "title": ""
-    },
-    {
-      "url": "https://i.wfolio.ru/x/cXPZPmu9lCw5tkRNat7JtyHjrPiZiclN/VJgIrluFLtZWGwzaT5FJ07DuSK__bTQA/hdGgbQTQ2i-eOx1xtHArk5oepYtW3BO3/z6o0OhUgw6o8hEk_xaFD8PMrk-LjhW7_/FnM-CGBp9VNEMbDp6xPTCw.jpg",
-      "category": "polina",
-      "title": ""
-    },
-    {
-      "url": "https://i.wfolio.ru/x/cXPZPmu9lCw5tkRNat7JtyHjrPiZiclN/VJgIrluFLtZWGwzaT5FJ07DuSK__bTQA/hdGgbQTQ2i-eOx1xtHArk_urcS2poEuF/qUuyK8R_IsP0_XeRdpIEnAr1rvRUrFTv/3jHocBtWPvR8Suixsa0akg.jpg",
-      "category": "victoria",
-      "title": ""
-    },
-    {
-      "url": "https://i.wfolio.ru/x/D48ScH1DA6jxU_uSH-Or-C0cJClpP-QP/lEAL128xEMPGM2o_rKw_kMPHKR9vAJ80/SWrv_424rTyfftO3Ubiafazq67chQYgd/GVrimioxi5-Avf2ciIXiauM-k-T4tLQ9/jLMykxiVpH0x3KrxVKhsEA.jpg",
-      "category": "victoria",
-      "title": ""
-    },
-    {
-      "url": "https://i.wfolio.ru/x/cXPZPmu9lCw5tkRNat7JtyHjrPiZiclN/VJgIrluFLtZWGwzaT5FJ07DuSK__bTQA/hdGgbQTQ2i-eOx1xtHArk8vyYRCP_2WZ/9ibW-Nt7jitZFtxln_03DU_6o5-tjOTn/PbB2QD7OAbjSbmvtnjiBkw.jpg",
-      "category": "varvara",
       "title": ""
     },
     {

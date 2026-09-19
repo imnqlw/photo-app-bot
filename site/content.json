@@ -1,6 +1,6 @@
 {
   "brand": {
-    "name": "Анна",
+    "name": "Алина",
     "tagline": "Портреты, love story и свадьбы. Свет, воздух и живые эмоции.",
     "site_url": "https://gyulalievaalina.wfolio.pro/"
   },
@@ -33,6 +33,21 @@
   ],
   "portfolio_source_url": "",
   "portfolio": [
+    {
+      "url": "media/1.png",
+      "category": "portrait",
+      "title": ""
+    },
+    {
+      "url": "media/2.png",
+      "category": "portrait",
+      "title": ""
+    },
+    {
+      "url": "media/3.png",
+      "category": "portrait",
+      "title": ""
+    },
     {
       "url": "https://picsum.photos/seed/sever-p1/800/1000",
       "category": "portrait",

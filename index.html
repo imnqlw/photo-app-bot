@@ -145,6 +145,18 @@ select{width:100%;min-height:50px;padding:0 14px;font:inherit;font-size:16px;col
 .badge.new{background:var(--accent-soft);color:var(--ink)}
 .badge.accepted{background:var(--accent);color:var(--accent-ink)}
 .link{color:var(--accent);text-align:right;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+.count{margin:18px 0 10px;color:var(--muted);font-size:14px}
+.pcard{display:flex;gap:12px;padding:10px;margin-bottom:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.pcard.on{border-color:var(--accent)}
+.pcard>img{flex:none;width:72px;height:88px;object-fit:cover;border-radius:8px;background:var(--line)}
+.pcard-b{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.pcard-b select{min-height:38px;font-size:15px;border-radius:10px}
+.pcard-row{display:flex;gap:8px;margin-top:auto}
+.pill{align-self:flex-start;max-width:100%;padding:7px 13px;border:1px solid var(--line);border-radius:999px;font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.sq{display:grid;place-items:center;width:44px;height:40px;border:1px solid var(--line);border-radius:10px;font-size:17px;line-height:1}
+.sq:disabled{opacity:.35}
+.sq.del{margin-left:auto;color:var(--danger);border-color:var(--danger)}
 
 /* готово */
 .done{padding-top:34px}
@@ -209,6 +221,7 @@ const state = {
   content: null, view: 'home', stack: [], step: 0, filter: 'all', sending: false, result: null, lbList: [], lbIndex: 0,
   requestId: '', isAdmin: false,
   admin: { list: null, order: null, loading: false, error: '', result: null, start: '', dur: 2 },
+  photos: { list: null, categories: [], error: '' },
   order: {
     type: '', package: '', files: [], links: '', date: '', dateMode: 'exact', location: '',
     name: tgUser.first_name || '', contact: tgUser.username ? '@' + tgUser.username : '', comment: '',
@@ -265,9 +278,11 @@ function toast(msg) {
 const V = {
   home() {
     const c = state.content, b = c.brand || {}, ph = c.portfolio || [], pk = c.packages || [], fq = c.faq || [];
-    state.lbList = ph;
-    const reel = ph.length ? `<div class="reel" aria-label="Кадры из портфолио"><div class="track">${
-      ph.slice(0, 8).map((p, i) => `<button class="frame" data-act="lb" data-i="${i}" aria-label="Открыть кадр ${i + 1}"><img src="${esc(p.url)}" alt="${esc(p.title || 'Кадр из портфолио')}" loading="${i < 3 ? 'eager' : 'lazy'}"><span class="fn">${i + 1}</span></button>`).join('')
+    // Лента на главной: фото, отмеченные в админке. Пока ничего не отмечено, берём первые кадры портфолио
+    const reelPhotos = (c.home && c.home.length ? c.home : ph).slice(0, 12);
+    state.lbList = reelPhotos;
+    const reel = reelPhotos.length ? `<div class="reel" aria-label="Кадры из портфолио"><div class="track">${
+      reelPhotos.map((p, i) => `<button class="frame" data-act="lb" data-i="${i}" aria-label="Открыть кадр ${i + 1}"><img src="${esc(p.url)}" alt="${esc(p.title || 'Кадр из портфолио')}" loading="${i < 3 ? 'eager' : 'lazy'}"><span class="fn">${i + 1}</span></button>`).join('')
     }</div></div>` : '';
     const row = (to, title, meta) => `<button class="row" data-act="go" data-to="${to}"><b>${title}</b><span>${meta}</span>${icon(I.chev, 18)}</button>`;
     return `<h1 class="brand">${esc(b.name || 'Фотограф')}</h1>
@@ -278,7 +293,8 @@ const V = {
         ${row('prices', 'Цены и пакеты', `${pk.length} ${plural(pk.length, ['пакет', 'пакета', 'пакетов'])}`)}
         ${row('faq', 'Частые вопросы', `${fq.length}`)}
         ${b.site_url ? `<button class="row" data-act="site"><b>Сайт фотографа</b>${icon(I.ext, 18)}</button>` : ''}
-        ${state.isAdmin ? `<button class="row" data-act="adm-list"><b>Заявки</b><span>для администратора</span>${icon(I.chev, 18)}</button>` : ''}
+        ${state.isAdmin ? `<button class="row" data-act="adm-list"><b>Заявки</b><span>для администратора</span>${icon(I.chev, 18)}</button>
+        <button class="row" data-act="adm-photos"><b>Фотографии</b><span>лента и портфолио</span>${icon(I.chev, 18)}</button>` : ''}
       </div>`;
   },
 
@@ -403,6 +419,33 @@ const V = {
       <dl class="sum">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>${form}`;
   },
 
+  adminPhotos() {
+    const p = state.photos;
+    const head = `<h2 class="title">Фотографии</h2>
+      <p class="hint">Отмеченные кадры идут лентой на главном экране, в том же порядке. Остальные видны только в портфолио.</p>
+      <input class="sr" type="file" id="pfile" accept="image/*" multiple>`;
+    if (p.error) return `${head}<p class="hint">${esc(p.error)}</p>`;
+    if (!p.list) return `${head}<p class="hint">Загрузка…</p>`;
+    if (!p.list.length) return `${head}<p class="hint">Пока ни одного фото. Нажмите «Добавить фото» внизу.</p>`;
+    const cats = [{ id: 'all', title: 'Без категории' }, ...(p.categories || [])];
+    const onMain = p.list.filter(x => x.main).length;
+    return `${head}
+      <p class="count">На главной: ${onMain} из ${p.list.length}</p>
+      ${p.list.map((ph, i) => `<article class="pcard${ph.main ? ' on' : ''}">
+        <img src="${esc(ph.url)}" alt="" loading="lazy">
+        <div class="pcard-b">
+          <button class="pill" data-act="ph-main" data-id="${ph.id}" aria-pressed="${ph.main}">${ph.main ? '★ На главной' : '☆ Только в портфолио'}</button>
+          <select data-pcat="${ph.id}" aria-label="Категория">${cats.map(c =>
+            `<option value="${esc(c.id)}"${ph.category === c.id ? ' selected' : ''}>${esc(c.title)}</option>`).join('')}</select>
+          <div class="pcard-row">
+            <button class="sq" data-act="ph-up" data-id="${ph.id}" ${i === 0 ? 'disabled' : ''} aria-label="Выше">↑</button>
+            <button class="sq" data-act="ph-down" data-id="${ph.id}" ${i === p.list.length - 1 ? 'disabled' : ''} aria-label="Ниже">↓</button>
+            <button class="sq del" data-act="ph-del" data-id="${ph.id}" aria-label="Удалить">${icon(I.close, 18)}</button>
+          </div>
+        </div>
+      </article>`).join('')}`;
+  },
+
   adminDone() {
     const r = state.admin.result || {};
     const L = [];
@@ -437,12 +480,13 @@ function adminCanAccept() { const a = state.admin; return state.view === 'adminO
 function updateCta() {
   const v = state.view, o = state.order, bar = $('#cta-bar'), btn = $('#cta');
   bar.hidden = v === 'error' || v === 'adminList' || (v === 'adminOrder' && !adminCanAccept());
-  btn.disabled = state.sending;
+  btn.disabled = state.sending || (v === 'adminPhotos' && !state.photos.list);
   if (v === 'order') {
     btn.textContent = state.sending ? 'Отправляем…' : state.step === 3 ? 'Отправить заявку'
       : state.step === 1 && !o.files.length && !o.links.trim() ? 'Пропустить' : 'Далее';
   } else if (v === 'done' || v === 'adminDone') btn.textContent = 'Закрыть';
   else if (v === 'adminOrder') btn.textContent = state.sending ? 'Сохраняем…' : 'Принять заявку';
+  else if (v === 'adminPhotos') btn.textContent = state.sending ? 'Загружаем…' : '+ Добавить фото';
   else btn.textContent = 'Заказать съёмку';
 }
 
@@ -458,7 +502,9 @@ function back() {
   if (!$('#lb').hidden) return closeLb();
   if (state.sending) return;
   if (state.view === 'order' && state.step > 0) { state.step--; render(); window.scrollTo(0, 0); return; }
+  const from = state.view;
   state.view = state.stack.pop() || 'home'; render(); window.scrollTo(0, 0);
+  if (from === 'adminPhotos' && state.contentStale) refreshContent();   // подхватить изменения, сделанные в админке
 }
 
 /* ---------- просмотр фото ---------- */
@@ -579,6 +625,54 @@ async function adminDecline() {
   if (await ask('Отклонить заявку? Клиент получит уведомление.')) adminAct('admin_decline', {});
 }
 
+/* ---------- админ: фотографии ---------- */
+function applyPhotos(data) {
+  Object.assign(state.photos, { list: data.photos || [], categories: data.categories || [], error: '' });
+  state.contentStale = true;   // главная и портфолио перечитают контент при возврате
+}
+
+async function openAdminPhotos() {
+  state.stack.push(state.view); state.view = 'adminPhotos';
+  Object.assign(state.photos, { error: '', list: null }); render();
+  try { applyPhotos(await api('admin_photos')); } catch (e) { state.photos.error = e.message; }
+  if (state.view === 'adminPhotos') render();
+}
+
+/** Любое изменение возвращает с сервера полный список фото, поэтому экран всегда совпадает с Таблицей. */
+async function photoAct(action, payload, timeout) {
+  if (state.sending) return;
+  state.sending = true; updateCta();
+  try {
+    applyPhotos(await api(action, payload, timeout));
+    haptic('success');
+  } catch (e) { haptic('error'); toast(e.message); }
+  finally { state.sending = false; render(); }
+}
+
+async function photoDelete(id) {
+  if (await ask('Удалить это фото? Оно пропадёт из приложения, а файл уйдёт в корзину Google Диска.')) {
+    photoAct('admin_photo_delete', { id });
+  }
+}
+
+async function photoUpload(files) {
+  const picked = [...files].filter(f => f.type.startsWith('image/')).slice(0, MAX_FILES);
+  if (!picked.length) return;
+  if (files.length > picked.length) toast(`За раз можно добавить не больше ${MAX_FILES} фото`);
+  state.sending = true; updateCta();
+  let photos;
+  try {
+    photos = [];
+    for (const f of picked) photos.push(await toJpegBase64(f));
+  } catch (e) {
+    state.sending = false; updateCta();
+    haptic('error'); toast('Не удалось обработать фото. Попробуйте другой файл.');
+    return;
+  }
+  state.sending = false;
+  photoAct('admin_photo_add', { photos, category: 'all', main: true }, 120000);
+}
+
 /* ---------- события ---------- */
 document.addEventListener('click', ev => {
   const t = ev.target.closest('[data-act]'); if (!t) return;
@@ -598,6 +692,11 @@ document.addEventListener('click', ev => {
     case 'rmfile': { const [f] = state.order.files.splice(+d.i, 1); if (f) URL.revokeObjectURL(f.url); render(); break; }
     case 'retry': init(); break;
     case 'adm-list': openAdminList(); break;
+    case 'adm-photos': openAdminPhotos(); break;
+    case 'ph-main': photoAct('admin_photo_set', { id: +d.id, main: t.getAttribute('aria-pressed') !== 'true' }); break;
+    case 'ph-up': photoAct('admin_photo_set', { id: +d.id, move: -1 }); break;
+    case 'ph-down': photoAct('admin_photo_set', { id: +d.id, move: 1 }); break;
+    case 'ph-del': photoDelete(+d.id); break;
     case 'adm-open': openAdminOrder(+d.id); break;
     case 'adm-decline': adminDecline(); break;
     case 'tglink': openTg(d.u); break;
@@ -610,6 +709,7 @@ $('#cta').addEventListener('click', () => {
   if (v === 'order') nextStep();
   else if (v === 'done' || v === 'adminDone') closeApp();
   else if (v === 'adminOrder') adminAccept();
+  else if (v === 'adminPhotos') { const f = $('#pfile'); if (f) f.click(); }
   else startOrder(null);
 });
 
@@ -621,6 +721,11 @@ document.addEventListener('input', ev => {
 
 document.addEventListener('change', ev => {
   if (ev.target.dataset && ev.target.dataset.abind) state.admin[ev.target.dataset.abind] = ev.target.value;
+  if (ev.target.dataset && ev.target.dataset.pcat) {
+    photoAct('admin_photo_set', { id: +ev.target.dataset.pcat, category: ev.target.value });
+    return;
+  }
+  if (ev.target.id === 'pfile') { photoUpload(ev.target.files); ev.target.value = ''; return; }
   if (ev.target.id !== 'file') return;
   const room = MAX_FILES - state.order.files.length;
   const picked = [...ev.target.files].filter(f => f.type.startsWith('image/'));
@@ -658,6 +763,38 @@ async function fetchSitePortfolio(url) {
   } catch (e) { return []; } finally { clearTimeout(timer); }
 }
 
+/**
+ * Тексты, цены и фото живут в Google Таблице, их отдаёт сервер.
+ * content.json остаётся запасным вариантом: по нему приложение рисуется сразу
+ * и продолжает работать, если сервер недоступен.
+ */
+function mergeContent(fresh) {
+  if (!fresh) return false;
+  const keep = state.content || {};
+  const has = (v) => Array.isArray(v) ? v.length > 0 : !!v;
+  const next = {
+    brand: has(fresh.brand && fresh.brand.name) ? fresh.brand : keep.brand,
+    shoot_types: has(fresh.shoot_types) ? fresh.shoot_types : keep.shoot_types,
+    portfolio: has(fresh.portfolio) ? fresh.portfolio : keep.portfolio,
+    home: fresh.home || [],
+    packages: has(fresh.packages) ? fresh.packages : keep.packages,
+    prices_note: fresh.prices_note || keep.prices_note,
+    faq: has(fresh.faq) ? fresh.faq : keep.faq,
+    portfolio_source_url: keep.portfolio_source_url,
+  };
+  state.content = next;
+  state.contentStale = false;
+  document.title = (next.brand && next.brand.name) || 'Фотограф';
+  return true;
+}
+
+async function refreshContent() {
+  try {
+    if (mergeContent((await api('content', {}, 25000)).content) && $('#lb').hidden &&
+      ['home', 'portfolio', 'prices', 'faq'].includes(state.view)) render();
+  } catch (e) { /* остаёмся на content.json */ }
+}
+
 async function init() {
   try {
     const resp = await fetch('content.json?t=' + Date.now());
@@ -677,9 +814,14 @@ async function init() {
       if (['home', 'portfolio'].includes(state.view) && $('#lb').hidden) render();
     });
   }
-  // Заодно «будим» сервер (первый запрос к Apps Script после простоя медленный) и узнаём, админ ли пользователь
+  // Один запрос забирает свежий контент и заодно сообщает, админ ли пользователь
+  // (он же «будит» сервер: первое обращение к Apps Script после простоя медленное)
   if (tg && tg.initData && API_URL) {
-    api('me', {}, 20000).then(r => { state.isAdmin = !!r.is_admin; if (state.view === 'home') render(); }).catch(() => {});
+    api('me', {}, 25000).then(r => {
+      state.isAdmin = !!r.is_admin;
+      if (!mergeContent(r.content) && state.view === 'home') render();
+      else if ($('#lb').hidden && ['home', 'portfolio', 'prices', 'faq'].includes(state.view)) render();
+    }).catch(() => {});
   }
 }
 
